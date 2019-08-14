@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	   				       http://www.springframework.org/schema/beans/spring-beans.xsd
+	                       http://www.springframework.org/schema/context
+	                       http://www.springframework.org/schema/context/spring-context.xsd
+	                       http://www.springframework.org/schema/tx
+	                       http://www.springframework.org/schema/tx/spring-tx.xsd
+	                       http://www.springframework.org/schema/aop
+	                       http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+  <context:component-scan base-package="com.antoniopeng.hello.ssm.service.impl" />
+
+  <bean id="sqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+    <property name="dataSource" ref="dataSource" />
+    <property name="configLocation" value="classpath:mybatis-config.xml" />
+  </bean>
+
+  <context:property-placeholder location="classpath:db.properties" />
+  <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+    <property name="driverClass" value="${driver}" />
+    <property name="jdbcUrl" value="${url}" />
+    <property name="user" value="${user}" />
+    <property name="password" value="${password}" />
+  </bean>
+
+  <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+    <property name="basePackage" value="com.antoniopeng.hello.ssm.mapper" />
+    <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryBean" />
+  </bean>
+
+  <!-- 配置声明式事务管理器 -->
+  <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+    <property name="dataSource" ref="dataSource" />
+  </bean>
+
+  <!--  拦截器方式配置事务 -->
+  <tx:advice id="transactionAdvice" transaction-manager="transactionManager">
+    <tx:attributes>
+      <tx:method name="edit*" propagation="REQUIRED"  rollback-for="java.lang.Throwable"/>
+      <tx:method name="insert*" propagation="REQUIRED"  rollback-for="java.lang.Throwable"/>
+      <tx:method name="delete*" propagation="REQUIRED"   rollback-for="java.lang.Throwable"/>
+      <tx:method name="update*" propagation="REQUIRED"  rollback-for="java.lang.Throwable"/>
+      <tx:method name="find*" read-only="true" />
+      <tx:method name="select*" read-only="true"/>
+      <tx:method name="count*" read-only="true"/>
+      <tx:method name="*" />
+    </tx:attributes>
+  </tx:advice>
+
+  <!-- 开启注解事务-->
+  <tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true"  order="0"/>
+
+  <aop:config proxy-target-class="true">
+    <!-- 定义切入点 -->
+    <aop:pointcut id="mysqlTransactionPointcut" expression="execution(* com.antoniopeng.hello.ssm.service.impl.*.*(..))" />
+    <!-- 将事务通知 与 切入点组合 -->
+    <aop:advisor pointcut-ref="mysqlTransactionPointcut" advice-ref="transactionAdvice" order="1"/>
+  </aop:config>
+
+</beans>
