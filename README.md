@@ -1,2 +1,2 @@
 # hello-ssm
-SSM 单体应用框架
+SSM 单体架构应用
