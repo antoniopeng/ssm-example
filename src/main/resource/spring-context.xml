@@ -1,65 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:context="http://www.springframework.org/schema/context"
-       xmlns:tx="http://www.springframework.org/schema/tx"
-       xmlns:aop="http://www.springframework.org/schema/aop"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans
-	   				       http://www.springframework.org/schema/beans/spring-beans.xsd
-	                       http://www.springframework.org/schema/context
-	                       http://www.springframework.org/schema/context/spring-context.xsd
-	                       http://www.springframework.org/schema/tx
-	                       http://www.springframework.org/schema/tx/spring-tx.xsd
-	                       http://www.springframework.org/schema/aop
-	                       http://www.springframework.org/schema/aop/spring-aop.xsd">
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
 
-  <context:component-scan base-package="com.antoniopeng.hello.ssm.service.impl" />
+  <!-- 开启 Spring 相关注解 -->
+  <context:annotation-config />
 
-  <bean id="sqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
-    <property name="dataSource" ref="dataSource" />
-    <property name="configLocation" value="classpath:mybatis-config.xml" />
-  </bean>
+  <!-- 使用 Annotation 自动注册 Bean,只扫描 @Controller -->
+  <context:component-scan base-package="com.antoniopeng.hello.ssm">
+    <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+  </context:component-scan>
 
-  <context:property-placeholder location="classpath:db.properties" />
-  <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
-    <property name="driverClass" value="${driver}" />
-    <property name="jdbcUrl" value="${url}" />
-    <property name="user" value="${user}" />
-    <property name="password" value="${password}" />
-  </bean>
-
-  <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-    <property name="basePackage" value="com.antoniopeng.hello.ssm.mapper" />
-    <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryBean" />
-  </bean>
-
-  <!-- 配置声明式事务管理器 -->
+  <!-- 配置事务管理器 -->
   <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-    <property name="dataSource" ref="dataSource" />
+    <property name="dataSource" ref="dataSource"/>
   </bean>
 
-  <!--  拦截器方式配置事务 -->
-  <tx:advice id="transactionAdvice" transaction-manager="transactionManager">
-    <tx:attributes>
-      <tx:method name="edit*" propagation="REQUIRED"  rollback-for="java.lang.Throwable"/>
-      <tx:method name="insert*" propagation="REQUIRED"  rollback-for="java.lang.Throwable"/>
-      <tx:method name="delete*" propagation="REQUIRED"   rollback-for="java.lang.Throwable"/>
-      <tx:method name="update*" propagation="REQUIRED"  rollback-for="java.lang.Throwable"/>
-      <tx:method name="find*" read-only="true" />
-      <tx:method name="select*" read-only="true"/>
-      <tx:method name="count*" read-only="true"/>
-      <tx:method name="*" />
-    </tx:attributes>
-  </tx:advice>
-
-  <!-- 开启注解事务-->
-  <tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true"  order="0"/>
-
-  <aop:config proxy-target-class="true">
-    <!-- 定义切入点 -->
-    <aop:pointcut id="mysqlTransactionPointcut" expression="execution(* com.antoniopeng.hello.ssm.service.impl.*.*(..))" />
-    <!-- 将事务通知 与 切入点组合 -->
-    <aop:advisor pointcut-ref="mysqlTransactionPointcut" advice-ref="transactionAdvice" order="1"/>
-  </aop:config>
-
+  <!-- 开启事务注解驱动 -->
+  <tx:annotation-driven transaction-manager="transactionManager"/>
 </beans>
